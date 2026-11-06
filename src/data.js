@@ -108,7 +108,7 @@ export const projects = [
     metrics: [["<200ms", "ML inference"], ["−60%", "query latency"], ["100%", "branch coverage"]],
     stack: ["Python", "FastAPI", "Django REST", "Scikit-Learn", "PostgreSQL", "React.js", "Docker", "GitHub Actions"],
     links: [
-      { label: "Live", href: "https://proprietor.binarybrains.tech" },
+      { label: "Live", href: "https://proprietor.vercel.app" },
       { label: "GitHub", href: "https://github.com/redwanahmedutsab/Proprietor" },
     ],
     points: [
