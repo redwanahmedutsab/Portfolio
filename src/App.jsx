@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Neural from "./Neural.jsx";
 import Loader from "./Loader.jsx";
+import Chatbot from "./Chatbot.jsx";
 import { CareerArt, PropArt, CampArt, Icon, Ring, Bars, Growth } from "./Visuals.jsx";
 import { Reveal, CountUp, Typed, Wave, reduced, useScrollProgress, useActiveSection, useClickEffects } from "./hooks.jsx";
 import { profile, stats, about, facts, skills, marquee, timeline, projects, research, wins } from "./data.js";
@@ -255,6 +256,7 @@ export default function App() {
           </Reveal>
         </section>
       </main>
+      <Chatbot />
       <footer className="foot">© 2026 Redwan Ahmed Utsab · AI Engineer · {profile.location}</footer>
     </>
   );

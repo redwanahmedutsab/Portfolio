@@ -78,7 +78,7 @@ export const timeline = [
     when: "Graduated Mar 2026",
     where: "Dhaka",
     points: [
-      "CGPA 3.69 / 4.00.",
+      "CGPA 3.70 / 4.00.",
       "Coursework: Machine Learning, Natural Language Processing, Data Structures & Algorithms, Database Systems, Software Engineering, Operating Systems, Discrete Mathematics.",
     ],
   },
