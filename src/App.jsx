@@ -1,48 +1,92 @@
 import { useEffect, useRef, useState } from "react";
 import Neural from "./Neural.jsx";
-import Trainer from "./Trainer.jsx";
-import { Learn, Meaning, Predict, CareerArt, PropArt, CampArt, Ring, Bars, Growth } from "./Visuals.jsx";
-import { Reveal, CountUp, Wave, reduced } from "./hooks.jsx";
-import { profile, projects, research, experience, wins } from "./data.js";
+import Loader from "./Loader.jsx";
+import { CareerArt, PropArt, CampArt, Icon, Ring, Bars, Growth } from "./Visuals.jsx";
+import { Reveal, CountUp, Typed, Wave, reduced, useScrollProgress, useActiveSection, useClickEffects } from "./hooks.jsx";
+import { profile, stats, about, facts, skills, marquee, timeline, projects, research, wins } from "./data.js";
 
-const NAVY = "#0b1437", MID = "#070b1f", SOFT = "#f4f6fb", WHITE = "#ffffff";
-
-const EXPLAIN = [
-  { Viz: Learn, title: "It learns from examples", text: "Show an AI thousands of examples and it spots the patterns on its own, like a child learning to tell cats from dogs.", used: "Used in my circuit-design language model, which reads plain-English commands with 94% accuracy." },
-  { Viz: Meaning, title: "It understands meaning", text: "Words become numbers that capture what they mean, so a search can find answers that are close in meaning, not just matching letters.", used: "Used in CareerMind, which finds the right career knowledge before answering." },
-  { Viz: Predict, title: "It predicts what comes next", text: "By learning how things relate, an AI can make a sensible estimate for something it has never seen before.", used: "Used in Proprietor, which estimates a fair property price in under 0.2 seconds." },
-];
-const HOW = {
-  CareerMind: { art: CareerArt, tone: "a", how: ["You ask a career question in the chat.", "It searches a knowledge base of real career and job information.", "It writes a personal answer and scores how well roles fit you."], plain: "A chatbot career coach that looks things up before it advises you." },
-  Proprietor: { art: PropArt, tone: "b", how: ["You browse, list or rent property.", "An AI model estimates a fair price in under 0.2 seconds.", "Accounts and payments are secured and tested end to end."], plain: "A property marketplace with an AI price estimator built in." },
-  Campusor: { art: CampArt, tone: "c", how: ["Students sign in once.", "Four connected apps share that single login: marketplace, events, lost and found, and profiles."], plain: "One app for campus life, from selling a textbook to finding a lost wallet." },
-};
-const STEPS = [
-  ["01", "Prepare the data", "Good AI starts with clean, organised information.", ["Python", "PostgreSQL", "ChromaDB", "Qdrant"]],
-  ["02", "Teach the model", "Train or fine-tune models, or let them search and reason.", ["BERT / DistilBERT", "Scikit-Learn", "LangGraph", "RAG"]],
-  ["03", "Build the product", "Wrap the intelligence in an app people can actually use.", ["FastAPI", "Django REST", "React", "Next.js"]],
-  ["04", "Ship it and keep it healthy", "Automatic tests and deployments make updates safe.", ["Docker", "GitHub Actions", "AWS EC2", "Vercel"]],
-];
+const HERO_END = "#0a1233", NAVY = "#0b1437", MID = "#070b1f", SOFT = "#f4f6fb", WHITE = "#ffffff";
+const ART = { career: CareerArt, property: PropArt, campus: CampArt };
+const TONE = { career: "a", property: "b", campus: "c" };
+const NAV = [["about", "About"], ["skills", "Skills"], ["experience", "Experience"], ["work", "Projects"], ["research", "Research"], ["contact", "Contact"]];
+const SECTION_IDS = ["about", "skills", "experience", "work", "research", "achievements", "contact"]; // document order
 
 function Tilt({ children, className = "" }) {
   const ref = useRef(null);
   const move = (e) => {
     if (reduced || e.pointerType !== "mouse") return;
     const b = ref.current.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - 0.5, y = (e.clientY - b.top) / b.height - 0.5;
-    ref.current.style.setProperty("--ry", `${x * 8}deg`); ref.current.style.setProperty("--rx", `${-y * 8}deg`);
+    ref.current.style.setProperty("--ry", `${x * 6}deg`); ref.current.style.setProperty("--rx", `${-y * 6}deg`);
   };
   const leave = () => { ref.current.style.setProperty("--ry", "0deg"); ref.current.style.setProperty("--rx", "0deg"); };
-  return <article ref={ref} className={`tilt ${className}`} onPointerMove={move} onPointerLeave={leave}>{children}</article>;
+  return <article ref={ref} className={`tilt rip ${className}`} onPointerMove={move} onPointerLeave={leave}>{children}</article>;
+}
+
+// A vertical timeline whose line fills in as you scroll past it.
+function Timeline({ items }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    const f = () => {
+      const b = el.getBoundingClientRect();
+      const p = Math.max(0, Math.min(1, (innerHeight * 0.65 - b.top) / b.height));
+      el.style.setProperty("--p", reduced ? 1 : p.toFixed(3));
+    };
+    f(); addEventListener("scroll", f, { passive: true }); addEventListener("resize", f);
+    return () => { removeEventListener("scroll", f); removeEventListener("resize", f); };
+  }, []);
+  return (
+    <ol className="tl" ref={ref}>
+      <span className="tl-rail" aria-hidden="true"><i /></span>
+      {items.map((t, i) => (
+        <Reveal as="li" key={t.role} from={i % 2 ? "right" : "left"} delay={0.05} className={`tl-item ${t.kind}`}>
+          <span className="tl-dot" aria-hidden="true"><Icon name={t.kind === "edu" ? "cap" : "brief"} size={16} /></span>
+          <div className="card tl-card rip">
+            <p className="tl-when">{t.when}</p>
+            <h3>{t.role}</h3>
+            <p className="m">{t.org} · {t.where}</p>
+            <ul>{t.points.map((p) => <li key={p}>{p}</li>)}</ul>
+          </div>
+        </Reveal>
+      ))}
+    </ol>
+  );
+}
+
+function CopyEmail() {
+  const [done, setDone] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(profile.email); } catch { /* clipboard may be blocked; still show feedback */ }
+    setDone(true); setTimeout(() => setDone(false), 1800);
+  };
+  return (
+    <button type="button" className={`btn ghost copy${done ? " ok" : ""}`} onClick={copy} aria-live="polite">
+      <Icon name={done ? "check" : "copy"} size={18} />{done ? "Copied!" : "Copy email"}
+    </button>
+  );
 }
 
 export default function App() {
   const [solid, setSolid] = useState(false);
+  const [open, setOpen] = useState(false); // gate has opened
+  const [menu, setMenu] = useState(false);
   const hero = useRef(null);
+  const progress = useScrollProgress();
+  const active = useActiveSection(SECTION_IDS);
+  useClickEffects();
+
   useEffect(() => {
     const f = () => setSolid(scrollY > 40);
     f(); addEventListener("scroll", f, { passive: true });
     return () => removeEventListener("scroll", f);
   }, []);
+  useEffect(() => { document.documentElement.classList.toggle("opened", open); }, [open]);
+  useEffect(() => {
+    if (!menu) return;
+    const esc = (e) => e.key === "Escape" && setMenu(false);
+    addEventListener("keydown", esc); return () => removeEventListener("keydown", esc);
+  }, [menu]);
+
   const orbs = (e) => {
     if (reduced) return;
     const b = hero.current.getBoundingClientRect();
@@ -52,68 +96,103 @@ export default function App() {
 
   return (
     <>
-      <a className="skip" href="#work">Skip to projects</a>
-      <header className={`nav${solid ? " solid" : ""}`}>
+      <Loader onOpen={() => setOpen(true)} />
+      <div className="progress" aria-hidden="true"><i style={{ transform: `scaleX(${progress})` }} /></div>
+      <a className="skip" href="#about">Skip to content</a>
+      <header className={`nav${solid || menu ? " solid" : ""}${menu ? " menu-open" : ""}`}>
         <a href="#top" className="brand">
           <svg viewBox="0 0 40 40" aria-hidden="true"><g stroke="#22d3ee" strokeWidth="2.5"><path d="M9 11L20 20L9 29M20 20H33" /></g><circle cx="9" cy="11" r="4.5" fill="#22d3ee" /><circle cx="9" cy="29" r="4.5" fill="#2f6bff" /><circle cx="20" cy="20" r="4.5" fill="#7c5cff" /><circle cx="33" cy="20" r="4.5" fill="#fff" /></svg>
           Redwan Ahmed Utsab
         </a>
-        <nav aria-label="Primary"><a href="#learn">How AI works</a><a href="#train">Watch it learn</a><a href="#work">Projects</a><a href="#results">Results</a></nav>
-        <a className="btn small" href="#contact">Say hello</a>
+        <nav aria-label="Primary">{NAV.slice(0, 5).map(([id, label]) => <a key={id} href={`#${id}`} className={active === id ? "on" : ""} aria-current={active === id ? "true" : undefined}>{label}</a>)}</nav>
+        <a className="btn small rip" href="#contact">Get in touch</a>
+        <button type="button" className="burger" aria-label="Menu" aria-expanded={menu} onClick={() => setMenu((m) => !m)}><i /><i /><i /></button>
+        <div className="mnav" aria-hidden={!menu}>
+          {NAV.map(([id, label], i) => <a key={id} href={`#${id}`} tabIndex={menu ? 0 : -1} style={{ "--i": i }} onClick={() => setMenu(false)}>{label}</a>)}
+        </div>
       </header>
 
       <main id="top">
         <section className="hero" ref={hero} onPointerMove={orbs}>
           <div className="orb o1" aria-hidden="true" /><div className="orb o2" aria-hidden="true" />
-          <Neural />
+          <Neural run={open || reduced} />
           <div className="hero-copy">
-            <p className="pill"><i /> AI Engineer · Dhaka, Bangladesh</p>
-            <h1>Turning <span className="grad">intelligence</span> into products people use.</h1>
-            <p className="lead">I'm Redwan Ahmed Utsab. I build AI systems that read, search and reason, from the model to the app to the servers behind it. Let me show you how it all works, no jargon required.</p>
-            <div className="cta"><a className="btn primary" href="#work">Explore my work</a><a className="btn ghost" href="#train">Watch an AI learn</a></div>
-            <ul className="hstats">
-              <li><b><CountUp to={450} suffix="+" /></b><span>coding problems solved</span></li>
-              <li><b><CountUp to={94} suffix="%" /></b><span>language-model accuracy</span></li>
-              <li><b><CountUp to={3} /></b><span>live AI products</span></li>
+            <p className="pill hin" style={{ "--h": 0 }}><i /> Open to AI Engineer roles · {profile.location}</p>
+            <p className="hello hin" style={{ "--h": 1 }}>Hi, I'm</p>
+            <h1 className="hin" style={{ "--h": 2 }}><span className="grad">Redwan Ahmed Utsab</span></h1>
+            <p className="role hin" style={{ "--h": 3 }}>AI Engineer <span>|</span> {profile.tagline}</p>
+            <p className="typing hin" style={{ "--h": 4 }}>I build <Typed words={profile.typed} start={open} /></p>
+            <p className="lead hin" style={{ "--h": 5 }}>{profile.summary}</p>
+            <div className="cta hin" style={{ "--h": 6 }}>
+              <a className="btn primary" href="#work">View my work <Icon name="arrow" size={18} /></a>
+              <a className="btn ghost" href="#contact">Contact me</a>
+              <span className="soc">
+                {profile.links.slice(0, 2).map((l) => <a key={l.href} className="icon-btn" href={l.href} target="_blank" rel="noreferrer" aria-label={l.label}><Icon name={l.label.toLowerCase()} size={20} fill /></a>)}
+              </span>
+            </div>
+            <ul className="hstats hin" style={{ "--h": 7 }}>
+              {stats.map((s) => <li key={s.label}><b><CountUp to={s.to} suffix={s.suffix} start={open} /></b><span>{s.label}</span></li>)}
             </ul>
           </div>
-          <p className="hint" aria-hidden="true">Move over the network, or click it to send a signal through.</p>
+          <p className="hint hin" style={{ "--h": 9 }} aria-hidden="true">Move over the network, or click it to send a signal through.</p>
         </section>
-        <Wave from={MID} to={SOFT} />
+        <div className="marquee" aria-hidden="true">
+          <div className="mq-track">{[0, 1].map((k) => <ul key={k}>{marquee.map((m) => <li key={m + k}>{m}</li>)}</ul>)}</div>
+        </div>
+        <Wave from={HERO_END} to={SOFT} />
 
-        <section id="learn" className="sec soft">
-          <Reveal className="head"><p className="kicker">AI in one minute</p><h2>Three ideas behind almost every AI you meet</h2><p className="sub">You don't need a technical background. Here is what's really going on, and where I've used it.</p></Reveal>
-          <div className="grid3">
-            {EXPLAIN.map(({ Viz, title, text, used }, i) => (
-              <Reveal key={title} delay={i * 0.12} className="card ex"><Viz /><h3>{title}</h3><p>{text}</p><p className="used">{used}</p></Reveal>
-            ))}
+        <section id="about" className="sec soft">
+          <Reveal className="head"><p className="kicker">About me</p><h2>Engineer, researcher, founder</h2></Reveal>
+          <div className="about">
+            <Reveal from="left" className="about-copy">
+              {about.map((t) => <p key={t.slice(0, 20)}>{t}</p>)}
+              <div className="cta"><a className="btn small dark rip" href="#work">See my projects</a><a className="btn small dark rip" href="#contact">Work with me</a></div>
+            </Reveal>
+            <Reveal from="right" delay={0.1} className="card facts rip">
+              <div className="avatar" aria-hidden="true"><span>RU</span></div>
+              <h3>{profile.name}</h3>
+              <p className="m">{profile.role} · {profile.location}</p>
+              <dl>{facts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+            </Reveal>
           </div>
         </section>
         <Wave from={SOFT} to={NAVY} />
 
-        <section id="train" className="sec navy">
-          <Reveal className="head"><p className="kicker cy">Try it yourself</p><h2>Watch an AI learn, live</h2><p className="sub">This is a real neural network, small enough to train inside your browser. It starts out guessing. Press Train and watch it find the pattern.</p></Reveal>
-          <Reveal><Trainer /></Reveal>
+        <section id="skills" className="sec navy">
+          <Reveal className="head"><p className="kicker cy">Technical skills</p><h2>The stack I build with</h2><p className="sub">From retrieval and fine-tuning to APIs, databases and deployment.</p></Reveal>
+          <div className="skills">
+            {skills.map((s, i) => (
+              <Reveal key={s.group} delay={(i % 3) * 0.1} from={i % 3 === 0 ? "left" : i % 3 === 2 ? "right" : "up"} className="glass sk rip">
+                <h3><span className="sk-ico"><Icon name={s.icon} size={20} /></span>{s.group}</h3>
+                <ul className="chips dk">{s.items.map((c, j) => <li key={c} style={{ "--j": j }}>{c}</li>)}</ul>
+              </Reveal>
+            ))}
+          </div>
         </section>
         <Wave from={NAVY} to={WHITE} />
 
-        <section id="work" className="sec white">
-          <Reveal className="head"><p className="kicker">Shipped, not just prototyped</p><h2>AI products you can open right now</h2><p className="sub">Each one pairs a smart model with an app, a secure backend and automatic deployment.</p></Reveal>
+        <section id="experience" className="sec white">
+          <Reveal className="head"><p className="kicker">Experience & education</p><h2>Where I've built and taught</h2></Reveal>
+          <Timeline items={timeline} />
+        </section>
+        <Wave from={WHITE} to={SOFT} />
+
+        <section id="work" className="sec soft">
+          <Reveal className="head"><p className="kicker">Selected projects</p><h2>Products I've shipped</h2><p className="sub">Each one is live, deployed and built end to end: model, API, database and CI/CD.</p></Reveal>
           <div className="grid3 proj">
             {projects.map((p, i) => {
-              const h = HOW[p.title], Art = h.art;
+              const Art = ART[p.art];
               return (
-                <Reveal key={p.title} delay={i * 0.12}>
+                <Reveal key={p.title} delay={i * 0.12} from={i === 0 ? "left" : i === 2 ? "right" : "up"}>
                   <Tilt className="card pc">
-                    <div className={`pc-art tone-${h.tone}`}><Art /></div>
+                    <div className={`pc-art tone-${TONE[p.art]}`}><Art /></div>
                     <div className="pc-body">
-                      <h3>{p.title}</h3><p className="pl">{h.plain}</p>
-                      <ol className="how">{h.how.map((t) => <li key={t}>{t}</li>)}</ol>
-                      <div className="links">{p.links.map((l) => <a key={l.href} className="btn small dark" href={l.href} target="_blank" rel="noreferrer">{l.label}</a>)}</div>
-                      <details><summary>Under the hood, for engineers</summary>
-                        <ul>{p.points.map((t) => <li key={t}>{t}</li>)}</ul>
-                        <ul className="chips">{p.stack.map((s) => <li key={s}>{s}</li>)}</ul>
-                      </details>
+                      <p className="pk">{p.kind}</p>
+                      <h3>{p.title}</h3>
+                      <ul className="mets">{p.metrics.map(([v, l]) => <li key={l}><b>{v}</b><span>{l}</span></li>)}</ul>
+                      <ul className="pts">{p.points.map((t) => <li key={t}>{t}</li>)}</ul>
+                      <ul className="chips">{p.stack.map((s) => <li key={s}>{s}</li>)}</ul>
+                      <div className="links">{p.links.map((l) => <a key={l.href} className="btn small dark" href={l.href} target="_blank" rel="noreferrer">{l.label} <Icon name="arrow" size={15} /></a>)}</div>
                     </div>
                   </Tilt>
                 </Reveal>
@@ -121,41 +200,39 @@ export default function App() {
             })}
           </div>
         </section>
-        <Wave from={WHITE} to={SOFT} />
-
-        <section className="sec soft">
-          <Reveal className="head"><p className="kicker">How I build</p><h2>From raw data to a product that stays online</h2></Reveal>
-          <ol className="steps">
-            {STEPS.map(([n, t, d, chips], i) => (
-              <Reveal as="li" key={n} delay={i * 0.12}>
-                <span className="sn">{n}</span><h3>{t}</h3><p>{d}</p>
-                <ul className="chips">{chips.map((c) => <li key={c}>{c}</li>)}</ul>
-              </Reveal>
-            ))}
-          </ol>
-        </section>
         <Wave from={SOFT} to={NAVY} />
 
-        <section id="results" className="sec navy">
-          <Reveal className="head"><p className="kicker cy">Results and research</p><h2>The numbers behind the work</h2><p className="sub">Measured improvements, and the research that makes AI cheaper to run.</p></Reveal>
+        <section id="research" className="sec navy">
+          <Reveal className="head"><p className="kicker cy">Research & publications</p><h2>Making Transformers and NLP systems work better</h2><p className="sub">Two papers under review, plus measurable engineering results from the products above.</p></Reveal>
           <div className="res">
-            <Reveal className="glass"><Growth /><h3>{research[0].title}</h3><p className="m">{research[0].meta}</p><p>My thesis teaches a Transformer (the design behind tools like ChatGPT) to read long texts without comparing every word with every other word, cutting the work per layer from O(n²) to O(n log n) at comparable accuracy.</p></Reveal>
+            <Reveal from="left" className="glass rip"><Growth /><h3>{research[0].title}</h3><p className="m">{research[0].meta}</p><p>{research[0].text}</p></Reveal>
             <div className="stack">
-              <Reveal className="glass row2" delay={0.1}><Ring value={94} label="of circuit commands understood correctly" /><div><h3>{research[1].title}</h3><p className="m">{research[1].meta}</p><p>Type the circuit you want in plain English. The system draws the diagram in under 2 seconds.</p></div></Reveal>
-              <Reveal className="glass" delay={0.2}><Bars title="Property search time" before={100} after={40} note="60% faster after redesigning how the database is organised." /></Reveal>
-              <Reveal className="glass" delay={0.3}><Bars title="Data sent per request" before={100} after={30} note="70% less, by filtering on the server instead of in the browser." /></Reveal>
+              <Reveal from="right" className="glass row2 rip" delay={0.1}><Ring value={94} label="classification accuracy" /><div><h3>{research[1].title}</h3><p className="m">{research[1].meta}</p><p>{research[1].text}</p></div></Reveal>
+              <Reveal from="right" className="glass rip" delay={0.2}><Bars title="Listing query latency · Proprietor" before={100} after={40} note="60% lower after adding composite indexes across 8 PostgreSQL entities." /></Reveal>
+              <Reveal from="right" className="glass rip" delay={0.3}><Bars title="Response payload · Campusor" before={100} after={30} note="70% smaller by moving filtering server-side with django-filter." /></Reveal>
             </div>
           </div>
         </section>
         <Wave from={NAVY} to={WHITE} />
 
-        <section className="sec white">
-          <Reveal className="head"><p className="kicker">Beyond code</p><h2>Building teams and teaching others</h2></Reveal>
-          <div className="grid3 exp">
-            {experience.map((e, i) => (
-              <Reveal key={e.role} delay={i * 0.1} className="card"><h3>{e.role}</h3><p className="m">{e.org}, {e.when}</p><p>{e.text}</p></Reveal>
-            ))}
-            <Reveal delay={0.2} className="card"><h3>Competitions</h3><ul className="wins">{wins.map((w) => <li key={w}>{w}</li>)}</ul></Reveal>
+        <section id="achievements" className="sec white">
+          <Reveal className="head"><p className="kicker">Achievements</p><h2>Competitions and problem solving</h2></Reveal>
+          <div className="wins">
+            <Reveal from="left" className="card lc rip">
+              <span className="w-ico"><Icon name="code2" size={26} /></span>
+              <p className="lc-n"><CountUp to={450} suffix="+" /></p>
+              <h3>LeetCode problems solved</h3>
+              <p>Across dynamic programming, graphs, binary search and sliding window techniques.</p>
+              <a className="btn small dark" href={profile.links[2].href} target="_blank" rel="noreferrer">View profile <Icon name="arrow" size={15} /></a>
+            </Reveal>
+            <div className="trophies">
+              {wins.map((w, i) => (
+                <Reveal key={w.text} delay={i * 0.1} from="zoom" className="card tr rip">
+                  <span className="w-ico gold"><Icon name="trophy" size={22} /></span>
+                  <div><p className="tr-t">{w.title}</p><h3>{w.text}</h3><p className="m">{w.meta}</p></div>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
         <Wave from={WHITE} to={MID} />
@@ -166,11 +243,19 @@ export default function App() {
             <p className="kicker cy">Open to AI engineering roles and collaborations</p>
             <h2>Let's build something intelligent.</h2>
             <a className="mail" href={`mailto:${profile.email}`}>{profile.email}</a>
-            <div className="cta">{profile.links.map((l) => <a key={l.href} className="btn ghost" href={l.href} target="_blank" rel="noreferrer">{l.label}</a>)}</div>
+            <ul className="reach">
+              <li><Icon name="phone" size={18} /><a href={`tel:${profile.phone}`}>{profile.phone}</a></li>
+              <li><Icon name="pin" size={18} />{profile.location}</li>
+            </ul>
+            <div className="cta">
+              <a className="btn primary" href={`mailto:${profile.email}`}><Icon name="mail" size={18} />Send an email</a>
+              <CopyEmail />
+              {profile.links.map((l) => <a key={l.href} className="btn ghost" href={l.href} target="_blank" rel="noreferrer">{l.label}</a>)}
+            </div>
           </Reveal>
         </section>
       </main>
-      <footer className="foot">Redwan Ahmed Utsab · Dhaka, Bangladesh</footer>
+      <footer className="foot">© 2026 Redwan Ahmed Utsab · AI Engineer · {profile.location}</footer>
     </>
   );
 }
