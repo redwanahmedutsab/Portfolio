@@ -31,7 +31,7 @@ export const about = [
 export const facts = [
   ["Location", "Dhaka, Bangladesh"],
   ["Education", "B.Sc. CSE (Data Science), United International University"],
-  ["CGPA", "3.69 / 4.00"],
+  ["CGPA", "3.70 / 4.00"],
   ["Languages", "Bengali (native), English (IELTS 6.5)"],
   ["Currently", "Co-Founder & Co-CEO, BinaryBrains Technologies"],
 ];
