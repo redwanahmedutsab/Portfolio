@@ -45,7 +45,7 @@ export default function Loader({ onOpen }) {
   const status = STATUS[Math.min(STATUS.length - 1, Math.floor(pct / 22))];
 
   return (
-    <div className={`gate ${phase}`} role="status" aria-live="polite" aria-label={`Loading ${pct} percent`}>
+    <div className={`gate ${phase}`} role="status" aria-label="Loading portfolio">
       <div className="door dl"><i className="seam" /></div>
       <div className="door dr"><i className="seam" /></div>
       <div className="beam" aria-hidden="true" />

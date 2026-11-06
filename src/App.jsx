@@ -207,7 +207,7 @@ export default function App() {
           <div className="res">
             <Reveal from="left" className="glass rip"><Growth /><h3>{research[0].title}</h3><p className="m">{research[0].meta}</p><p>{research[0].text}</p></Reveal>
             <div className="stack">
-              <Reveal from="right" className="glass row2 rip" delay={0.1}><Ring value={94} label="classification accuracy" /><div><h3>{research[1].title}</h3><p className="m">{research[1].meta}</p><p>{research[1].text}</p></div></Reveal>
+              <Reveal from="right" className="glass row2 rip" delay={0.1}><Ring value={stats[1].to} label="classification accuracy" /><div><h3>{research[1].title}</h3><p className="m">{research[1].meta}</p><p>{research[1].text}</p></div></Reveal>
               <Reveal from="right" className="glass rip" delay={0.2}><Bars title="Listing query latency · Proprietor" before={100} after={40} note="60% lower after adding composite indexes across 8 PostgreSQL entities." /></Reveal>
               <Reveal from="right" className="glass rip" delay={0.3}><Bars title="Response payload · Campusor" before={100} after={30} note="70% smaller by moving filtering server-side with django-filter." /></Reveal>
             </div>
@@ -220,7 +220,7 @@ export default function App() {
           <div className="wins">
             <Reveal from="left" className="card lc rip">
               <span className="w-ico"><Icon name="code2" size={26} /></span>
-              <p className="lc-n"><CountUp to={450} suffix="+" /></p>
+              <p className="lc-n"><CountUp to={stats[0].to} suffix={stats[0].suffix} /></p>
               <h3>LeetCode problems solved</h3>
               <p>Across dynamic programming, graphs, binary search and sliding window techniques.</p>
               <a className="btn small dark" href={profile.links[2].href} target="_blank" rel="noreferrer">View profile <Icon name="arrow" size={15} /></a>
